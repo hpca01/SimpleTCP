@@ -40,8 +40,8 @@ int main(int argc, char const *argv[])
     struct sockaddr_in address;
 
     memset((char *)&address, 0, sizeof(address)); //set everything to 0, basically initialize to 0
-    address.sin_family = AF_INET;                 //0.0.0.0
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_ANY); //0.0.0.0
     address.sin_port = htons(PORT_NUM);
 
     int bind_result = bind(server_file_d, (struct sockaddr *)&address, sizeof(address));
