@@ -25,7 +25,7 @@ After which you can create a seperate terminal and invoke the client:
 rtn -> Hello Stranger!
 ```
 
-If you're curious about headers in a standard GET requeest, you can  browse to `localhost:8080/index.html`, and you'll see the same message returned.
+If you're curious about headers in a standard GET request, you can  browse to `localhost:8080/index.html`, and you'll see the same message returned.
 
 When you're done and want to clean up the artifacts:
 ```
