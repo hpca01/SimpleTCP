@@ -8,8 +8,8 @@
 #include <arpa/inet.h> //easy conversions to binary form
 
 #define PORT_NUM 8080
-#define EXIT_FAILURE -1
 #define ADDRESS "127.0.0.1"
+#define BUFF_SIZE 1024
 
 int main(int argc, char const *argv[])
 {
@@ -34,6 +34,21 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 
-    
+    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
+    {
+        perror("Could not connect");
+        return EXIT_FAILURE;
+    }
+    char *init = "Hi, there!";
+    if (send(sock, init, strlen(init), 0) < 0)
+    {
+        perror("Error sending!");
+        return EXIT_FAILURE;
+    }
+    char buffer[BUFF_SIZE] = {0};
+
+    long value = read(sock, buffer, BUFF_SIZE);
+    printf("rtn -> %s\n", buffer);
+
     return 0;
 }

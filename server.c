@@ -4,8 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#define EXIT_FAILURE -1
 #define PORT_NUM 8080
 #define BUFF_SIZE 20000
 
