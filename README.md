@@ -31,3 +31,9 @@ When you're done and want to clean up the artifacts:
 ```
 make clean
 ```
+
+- [x] Write simple TCP server
+- [x] Write client
+- [ ] Parse Headers
+- [ ] Assemble return with correct HTTP code.
+- [ ] Add multi-threading for **accepting**(not listening w/ backlog) more connection at a time.
