@@ -36,4 +36,4 @@ make clean
 - [x] Write client
 - [ ] Parse Headers
 - [ ] Assemble return with correct HTTP code.
-- [ ] Add multi-threading for **accepting**(not listening w/ backlog) more connection at a time.
+- [ ] Add multi-threading for **accepting**(not listening w/ backlog) more than 1 connection at a time.
