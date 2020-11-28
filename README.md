@@ -1,7 +1,7 @@
 ## Simple TCP server
 As title states, this is a simple TCP server written in C. A good weekend project.
 
-Next is to move on up to HTTP(basically a TCP with "formatted" returns)
+
 
 **To start project use the Makefile**
 
