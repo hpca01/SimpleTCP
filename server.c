@@ -5,15 +5,29 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <netdb.h>
 
 #define PORT_NUM 8080
 #define BUFF_SIZE 20000
 
 int main(int argc, char const *argv[])
 {
+
+    struct addrinfo hints, *res;
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET; //only ipv4
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    if (getaddrinfo(NULL, "8080", &hints, &res) < 0)
+    {
+        perror("Error with instantiating addrinfo struct");
+    }
+
     // Create Socket, bind to it
     // If Protocol is 0 it's automatically selected
-    int server_file_d = socket(AF_INET, SOCK_STREAM, 0);
+    int server_file_d = socket(res->ai_family, res->ai_socktype, res->ai_protocol); //change to PF_INET for the sake of "correctedness"
     if (server_file_d < 0)
     {
         //error has occured
@@ -37,16 +51,9 @@ int main(int argc, char const *argv[])
         };
     */
 
-    struct sockaddr_in address;
+    int bind_result = bind(server_file_d, res->ai_addr, res->ai_addrlen);
 
-    memset((char *)&address, 0, sizeof(address)); //set everything to 0, basically initialize to 0
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl(INADDR_ANY); //0.0.0.0
-    address.sin_port = htons(PORT_NUM);
-
-    int bind_result = bind(server_file_d, (struct sockaddr *)&address, sizeof(address));
-
-    socklen_t addrlen = sizeof(address);
+    socklen_t addrlen = res->ai_addrlen;
 
     if (bind_result < 0)
     {
