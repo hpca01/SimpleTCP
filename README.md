@@ -1,7 +1,7 @@
 ## Simple TCP server
 As title states, this is a simple TCP server written in C. A good weekend project.
 
-Next is to move on up to HTTP(basically a TCP with "formatted" returns)
+
 
 **To start project use the Makefile**
 
@@ -25,9 +25,15 @@ After which you can create a seperate terminal and invoke the client:
 rtn -> Hello Stranger!
 ```
 
-If you're curious about headers in a standard GET requeest, you can  browse to `localhost:8080/index.html`, and you'll see the same message returned.
+If you're curious about headers in a standard GET request, you can  browse to `localhost:8080/index.html`, and you'll see the same message returned.
 
 When you're done and want to clean up the artifacts:
 ```
 make clean
 ```
+
+- [x] Write simple TCP server
+- [x] Write client
+- [ ] Parse Headers
+- [ ] Assemble return with correct HTTP code.
+- [ ] Add multi-threading for **accepting**(not listening w/ backlog) more than 1 connection at a time.
