@@ -25,7 +25,7 @@ After which you can create a seperate terminal and invoke the client:
 rtn -> Hello Stranger!
 ```
 
-If you're curious about headers in a standard GET request, you can  browse to `localhost:8080/index.html`, and you'll see the same message returned.
+If you're curious about headers in a standard GET request, you can  browse to `localhost:8080/index.html`, and you'll see the same message returned(not done yet).
 
 When you're done and want to clean up the artifacts:
 ```
@@ -34,6 +34,6 @@ make clean
 
 - [x] Write simple TCP server
 - [x] Write client
-- [ ] Parse Headers
+- [x] Parse Headers
 - [ ] Assemble return with correct HTTP code.
-- [ ] Add multi-threading for **accepting**(not listening w/ backlog) more than 1 connection at a time.
+- [ ] Add multi-threading, currently using multi-processing.

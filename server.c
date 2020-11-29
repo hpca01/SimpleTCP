@@ -49,10 +49,10 @@ void handle_new_conn(int accepted_socket, void *additional_args)
         exit(EXIT_FAILURE);
     }
 
-    printf("%s\n\n", message);
+    parse_http(message);
 
     char *hello_msg = "Hello Stranger!";
-    char *outgoing = (char *)malloc((20 * sizeof(char)) + sizeof(hello_msg));
+    char *outgoing = (char *)malloc((20 * sizeof(char)) + sizeof(hello_msg)); //Todo: FREE
 
     sprintf(outgoing, "%s from PID: %d \n", hello_msg, child_pid);
 
@@ -64,6 +64,20 @@ void handle_new_conn(int accepted_socket, void *additional_args)
         exit(EXIT_FAILURE);
     }
     close(accepted_socket);
+    free(outgoing);
+}
+
+void parse_http(char *input)
+{
+    char *cp = strdup(input);
+    char *saveptr = NULL;
+
+    char *token;
+
+    while (token = strtok_r(cp, "\n", &cp))
+    {
+        printf("- %s\n", token);
+    }
 }
 
 int main(int argc, char const *argv[])
