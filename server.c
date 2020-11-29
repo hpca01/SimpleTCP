@@ -32,12 +32,13 @@ void check(int value, char *err_str)
     }
 }
 
-void handle_new_conn(int accepted_socket)
+void handle_new_conn(int accepted_socket, void *additional_args)
 {
+    char *from = (char *)additional_args;
+    printf(">> Incoming message from %s : \n", from);
     pid_t child_pid = getpid(); // underlying size is an int, so #10 chars max.
 
     char message[BUFF_SIZE] = {0};
-    char from[INET6_ADDRSTRLEN] = {0};
 
     long value = read(accepted_socket, message, BUFF_SIZE); //don't use pread socket is not "seekable"
 
@@ -47,7 +48,8 @@ void handle_new_conn(int accepted_socket)
         perror("Error reading incoming msg");
         exit(EXIT_FAILURE);
     }
-    printf("Incoming message from %s : \n %s \n", from, message);
+
+    printf("%s\n\n", message);
 
     char *hello_msg = "Hello Stranger!";
     char *outgoing = (char *)malloc((20 * sizeof(char)) + sizeof(hello_msg));
@@ -119,14 +121,16 @@ int main(int argc, char const *argv[])
         int accepted_socket;
 
         check(accepted_socket = accept(server_file_d, (struct sockaddr *)&incoming_addr, &addrlen), "Failed to accept connection");
+
         char from[INET6_ADDRSTRLEN] = {0};
+
         inet_ntop(incoming_addr.ss_family, get_in_addr((struct sockaddr *)&incoming_addr), from, sizeof(from));
 
         if (!fork())
         {
             close(server_file_d);
-            handle_new_conn(accepted_socket);
-            exit(0);
+            handle_new_conn(accepted_socket, (void *)from);
+            exit(EXIT_SUCCESS);
         }
         close(accepted_socket);
     }
