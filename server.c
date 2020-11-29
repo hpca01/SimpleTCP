@@ -22,40 +22,38 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
+//help w/ troubleshooting and simplifications.
+void check(int value, char *err_str)
+{
+    if (value < 0)
+    {
+        perror(err_str);
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main(int argc, char const *argv[])
 {
 
     struct addrinfo hints, *res;
     struct sockaddr_storage incoming_addr; // this is to make it ipv4 or ipv6 agnostic...
+    int server_file_d;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET; //only ipv4
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    if (getaddrinfo(NULL, "8080", &hints, &res) < 0)
-    {
-        perror("Error with instantiating addrinfo struct");
-    }
+    check(getaddrinfo(NULL, "8080", &hints, &res), "Error with instantiating addrinfo struct");
 
     // Create Socket, bind to it
     // If Protocol is 0 it's automatically selected
-    int server_file_d = socket(res->ai_family, res->ai_socktype, res->ai_protocol); //change to PF_INET for the sake of "correctedness"
-    if (server_file_d < 0)
-    {
-        //error has occured
-        perror("Cannot create the socket");
-        return 0;
-    }
+    check(server_file_d = socket(res->ai_family, res->ai_socktype, res->ai_protocol), "Cannot create the socket"); //change to PF_INET for the sake of "correctedness"
 
     //setsockopt to be able to reuse to an unclosed socket...usually happens if you close and re-start the server
     int yes = 1;
 
-    if (setsockopt(server_file_d, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) < 0)
-    {
-        perror("Could not reuse the unclosed socket.");
-        return 0;
-    }
+    check(setsockopt(server_file_d, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)), "Could not reuse the unclosed socket.");
 
     /*
         binding to socket requires a socketaddr struct,
@@ -75,21 +73,10 @@ int main(int argc, char const *argv[])
         NOTE: you do not have to pack it by hand,  use the helper func "getaddrinfo" and use the result ptr.
     */
 
-    int bind_result = bind(server_file_d, res->ai_addr, res->ai_addrlen);
-
-    if (bind_result < 0)
-    {
-        //failed to bind correctly
-        perror("Failed to bind socket to address/port");
-        return 0;
-    }
+    check(bind(server_file_d, res->ai_addr, res->ai_addrlen), "Failed to bind socket to address/port");
 
     //Now listen to the bound port
-    if (listen(server_file_d, 1) < 0)
-    {
-        perror("failed to listen");
-        exit(EXIT_FAILURE);
-    }
+    check(listen(server_file_d, 1), "Failed to listen");
     //listen doesn't mean accept
 
     socklen_t addrlen = sizeof(incoming_addr);
@@ -97,12 +84,10 @@ int main(int argc, char const *argv[])
     while (1)
     {
         printf("\n~~~~~~~~~Waiting to accept a new conn~~~~~~~~\n\n\n");
-        int accepted_socket = accept(server_file_d, (struct sockaddr *)&incoming_addr, &addrlen);
-        if (accepted_socket < 0)
-        {
-            perror("Failed to accept connection");
-            exit(EXIT_FAILURE);
-        }
+        int accepted_socket;
+
+        check(accepted_socket = accept(server_file_d, (struct sockaddr *)&incoming_addr, &addrlen), "Failed to accept connection");
+
         char message[BUFF_SIZE] = {0};
         char from[INET6_ADDRSTRLEN] = {0};
 
