@@ -32,6 +32,38 @@ void check(int value, char *err_str)
     }
 }
 
+void handle_new_conn(int accepted_socket)
+{
+    pid_t child_pid = getpid(); // underlying size is an int, so #10 chars max.
+
+    char message[BUFF_SIZE] = {0};
+    char from[INET6_ADDRSTRLEN] = {0};
+
+    long value = read(accepted_socket, message, BUFF_SIZE); //don't use pread socket is not "seekable"
+
+    if (value < 0)
+    {
+        close(accepted_socket);
+        perror("Error reading incoming msg");
+        exit(EXIT_FAILURE);
+    }
+    printf("Incoming message from %s : \n %s \n", from, message);
+
+    char *hello_msg = "Hello Stranger!";
+    char *outgoing = (char *)malloc((20 * sizeof(char)) + sizeof(hello_msg));
+
+    sprintf(outgoing, "%s from PID: %d \n", hello_msg, child_pid);
+
+    int write_result = write(accepted_socket, outgoing, strlen(outgoing));
+    if (write_result < 0)
+    {
+        close(accepted_socket);
+        perror("Error writing outgoing msg");
+        exit(EXIT_FAILURE);
+    }
+    close(accepted_socket);
+}
+
 int main(int argc, char const *argv[])
 {
 
@@ -87,31 +119,15 @@ int main(int argc, char const *argv[])
         int accepted_socket;
 
         check(accepted_socket = accept(server_file_d, (struct sockaddr *)&incoming_addr, &addrlen), "Failed to accept connection");
-
-        char message[BUFF_SIZE] = {0};
         char from[INET6_ADDRSTRLEN] = {0};
-
-        long value = read(accepted_socket, message, BUFF_SIZE); //don't use pread socket is not "seekable"
-
         inet_ntop(incoming_addr.ss_family, get_in_addr((struct sockaddr *)&incoming_addr), from, sizeof(from));
 
-        if (value < 0)
+        if (!fork())
         {
-            close(accepted_socket);
-            perror("Error reading incoming msg");
-            exit(EXIT_FAILURE);
+            close(server_file_d);
+            handle_new_conn(accepted_socket);
+            exit(0);
         }
-        printf("Incoming message from %s : \n %s \n", from, message);
-
-        char *hello_msg = "Hello Stranger!";
-        int write_result = write(accepted_socket, hello_msg, strlen(hello_msg));
-        if (write_result < 0)
-        {
-            close(accepted_socket);
-            perror("Error writing outgoing msg");
-            exit(EXIT_FAILURE);
-        }
-        printf("~~~~~~~~~~~Sent outgoing message!~~~~~~~~~~~~~\n\n\n");
         close(accepted_socket);
     }
 
