@@ -1,16 +1,4 @@
-#include <sys/socket.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-
-#define PORT_NUM 8080
-#define BUFF_SIZE 20000
+#include "server.h"
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -68,12 +56,39 @@ void handle_new_conn(int accepted_socket, void *additional_args)
     free(outgoing);
 }
 
+Route *parse_route(char *token)
+{
+    char *request;
+    Route *req = malloc(sizeof(Route)); // Todo Free
+
+    for (int i = 0; (request = strsep(&token, " ")) != NULL; i++)
+    {
+        if (i == 0)
+        {
+            // req type
+            if (strcmp(request, "GET"))
+                req->type = GET;
+            else if (strcmp(request, "POST"))
+                req->type = POST;
+            else if (strcmp(request, "PUT"))
+                req->type = PUT;
+        }
+        if (i == 1)
+            req->route = request;
+    }
+    return req;
+}
+
 void parse_http(char *input)
 {
     char *cp = strdup(input);
     char *saveptr = NULL;
 
     char *token;
+
+    //first line is request type, resource uri and http protocol
+    token = strtok_r(cp, "\n", &cp);
+    Route *route = parse_route(&token);
 
     while (token = strtok_r(cp, "\n", &cp))
     {
@@ -85,7 +100,7 @@ int main(int argc, char const *argv[])
 {
 
     struct addrinfo hints, *res;
-    struct sockaddr_storage incoming_addr; // this is to make it ipv4 or ipv6 agnostic...
+    struct sockaddr_storage incoming_addr; // this is to make it ipv4 or ipv6 agnostic
     int server_file_d;
 
     memset(&hints, 0, sizeof(hints));
