@@ -9,9 +9,9 @@
 
 #define PORT_NUM 8080
 #define ADDRESS "127.0.0.1"
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 2048
 
-int main(int argc, char const *argv[])
+int main()
 {
 
     struct sockaddr_in server_address;
@@ -47,7 +47,7 @@ int main(int argc, char const *argv[])
     }
     char buffer[BUFF_SIZE] = {0};
 
-    long value = read(sock, buffer, BUFF_SIZE);
+    read(sock, buffer, BUFF_SIZE);
     printf("rtn -> %s\n", buffer);
 
     return 0;

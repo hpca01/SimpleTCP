@@ -20,7 +20,7 @@ void check(int value, char *err_str)
     }
 }
 
-char *humanize(Route *route, int *pid)
+char *humanize(Route *route, pid_t *pid)
 {
     char *req_type = translate_reqtype(route->type);
 
@@ -29,9 +29,9 @@ char *humanize(Route *route, int *pid)
     // int len_str = snprintf(NULL, 0, "<html><head><title> Hello Process %d ! </title></head><body><h1>%s Request</h1><p> Host: %s <p> User-Agent: %s</body></html>",
     //                        pid, req_type, route->host, route->user_string);
 
-    printf("\tAt process %d\n \tWe have a req type of %s\n\tFrom a host %s\n\tUsing the following user string %s\n", pid, req_type, route->host, route->user_string);
+    printf("\tAt process %d\n \tWe have a req type of %s\n\tFrom a host %s\n\tUsing the following user string %s\n", *pid, req_type, route->host, route->user_string);
     int len_str = printf("<html>\n<head>\n<title>Hello Process %d !</title>\n</head>\n<body>\n<h1>%s Request</h1>\n <p> Host: %s \n<p> User-Agent: %s\n</body>\n</html>\n",
-                         pid, req_type, route->host, route->user_string);
+                         *pid, req_type, route->host, route->user_string);
 
     printf("Size of string %d", len_str);
 
@@ -71,16 +71,14 @@ void handle_new_conn(int accepted_socket, void *additional_args)
     Route *route = parse_http(message);
     pretty_print_route(route);
 
-    // char *output = humanize(route, child_pid);
-
-    // free(output);
+    char *output = humanize(route, &child_pid);
 
     char *hello_msg = "Hello Stranger!";
     char *outgoing = (char *)malloc((20 * sizeof(char)) + sizeof(hello_msg) + 1); //Todo: FREE
 
-    sprintf(outgoing, "%s from PID: %d \n\0", hello_msg, child_pid);
+    sprintf(outgoing, "%s from PID: %d \n", hello_msg, child_pid);
 
-    int write_result = write(accepted_socket, outgoing, strlen(outgoing));
+    int write_result = write(accepted_socket, output, strlen(output));
     if (write_result < 0)
     {
         close(accepted_socket);
@@ -88,7 +86,8 @@ void handle_new_conn(int accepted_socket, void *additional_args)
         exit(EXIT_FAILURE);
     }
     close(accepted_socket);
-    // free(output);
+
+    free(output);
     free(route);
     free(outgoing);
 }
@@ -102,14 +101,13 @@ Route *parse_route(char *token, Route *req)
         if (i == 0)
         {
             // req type
-            printf("\n - reqtype -%s- sizeof:%d \n", request, (sizeof(request) / sizeof(request[0]))); //TODO: FIX STRCMP issues
-            if (strcmp(request, "GET"))
+            if (strcmp(request, "GET") == 0)
             {
                 req->type = GET;
             }
-            else if (strcmp(request, "POST"))
+            else if (strcmp(request, "POST") == 0)
                 req->type = POST;
-            else if (strcmp(request, "PUT"))
+            else if (strcmp(request, "PUT") == 0)
                 req->type = PUT;
         }
         else if (i == 1)
@@ -145,7 +143,6 @@ void pretty_print_route(Route *route)
 Route *parse_http(char *input)
 {
     char *cp = strdup(input);
-    char *saveptr = NULL;
 
     char *token;
 
@@ -153,7 +150,7 @@ Route *parse_http(char *input)
     Route *route = malloc(sizeof(Route));
 
     int i = 0;
-    while (token = strtok_r(cp, "\n", &cp))
+    while ((token = strtok_r(cp, "\n", &cp)))
     {
         if (i == 0)
         {
@@ -172,7 +169,7 @@ Route *parse_http(char *input)
     return route;
 }
 
-int main(int argc, char const *argv[])
+int main()
 {
 
     struct addrinfo hints, *res;

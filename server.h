@@ -32,6 +32,6 @@ void check(int value, char *err_str);
 void handle_new_conn(int accepted_socket, void *additional_args);
 Route *parse_http(char *input);
 Route *parse_route(char *input, Route *req);
-char *humanize(Route *route, int *pid);
+char *humanize(Route *route, pid_t *pid);
 void pretty_print_route(Route *route);
 char *translate_reqtype(ReqType type);
