@@ -35,5 +35,5 @@ make clean
 - [x] Write simple TCP server
 - [x] Write client
 - [x] Parse Headers
-- [ ] Assemble return with correct HTTP code.
+- [x] Assemble return with correct HTTP code.
 - [ ] Add multi-threading, currently using multi-processing.

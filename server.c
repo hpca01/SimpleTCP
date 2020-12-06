@@ -224,14 +224,27 @@ int main()
 
         inet_ntop(incoming_addr.ss_family, get_in_addr((struct sockaddr *)&incoming_addr), from, sizeof(from));
 
-        if (!fork())
-        {
-            close(server_file_d);
-            handle_new_conn(accepted_socket, (void *)from);
-            exit(EXIT_SUCCESS);
-        }
-        close(accepted_socket);
+        pthread_t thread;
+
+        thread_args args = {accepted_socket, from};
+
+        pthread_create(&thread, NULL, &handle_conn_wrapper, (void *)&args); // don't want any special attributes(detachable threads, etc), we just want default
+
+        // if (!fork())
+        // {
+        //     close(server_file_d);
+        //     handle_new_conn(accepted_socket, (void *)from);
+        //     exit(EXIT_SUCCESS);
+        // }
+        // close(accepted_socket);
     }
 
     return 0;
+}
+void *handle_conn_wrapper(void *arg)
+{
+    thread_args *args = (thread_args *)arg;
+    handle_new_conn(args->socket, args->host_name);
+    pthread_exit(NULL);
+    return NULL;
 }

@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 
 #define PORT_NUM 8080
 #define BUFF_SIZE 20000
@@ -27,8 +28,15 @@ typedef struct
     char *user_string;
 } Route;
 
+typedef struct
+{
+    int socket;
+    char *host_name;
+} thread_args;
+
 void *get_in_addr(struct sockaddr *sa);
 void check(int value, char *err_str);
+void *handle_conn_wrapper(void *arg);
 void handle_new_conn(int accepted_socket, void *additional_args);
 Route *parse_http(char *input);
 Route *parse_route(char *input, Route *req);
