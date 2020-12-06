@@ -36,4 +36,5 @@ make clean
 - [x] Write client
 - [x] Parse Headers
 - [x] Assemble return with correct HTTP code.
-- [ ] Add multi-threading, currently using multi-processing.
+- [x] Add multi-threading, currently using multi-processing.
+- [ ] Turn it into a multi-threaded file-server! :D
