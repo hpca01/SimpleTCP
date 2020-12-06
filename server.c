@@ -22,32 +22,28 @@ void check(int value, char *err_str)
 
 char *humanize(Route *route, pid_t *pid)
 {
+    const char *fmt = "HTTP/1.1 200 OK\r\n"
+                      "Content-length: %ld\r\n"
+                      "Content-Type: text/html\r\n"
+                      "\r\n"
+                      "%s";
+
     char *req_type = translate_reqtype(route->type);
 
-    pretty_print_route(route);
-
-    // int len_str = snprintf(NULL, 0, "<html><head><title> Hello Process %d ! </title></head><body><h1>%s Request</h1><p> Host: %s <p> User-Agent: %s</body></html>",
-    //                        pid, req_type, route->host, route->user_string);
-
-    printf("\tAt process %d\n \tWe have a req type of %s\n\tFrom a host %s\n\tUsing the following user string %s\n", *pid, req_type, route->host, route->user_string);
-    int len_str = printf("<html>\n<head>\n<title>Hello Process %d !</title>\n</head>\n<body>\n<h1>%s Request</h1>\n <p> Host: %s \n<p> User-Agent: %s\n</body>\n</html>\n",
-                         *pid, req_type, route->host, route->user_string);
-
-    printf("Size of string %d", len_str);
+    int len_str = snprintf(NULL, 0, "<html>\n<head>\n<title>Hello Process %d !</title>\n</head>\n<body>\n<h1>%s Request</h1>\n<p> Host: %s \n<p> User-Agent: %s \n<p> Looking for: <b>%s</b> \n<p>Answered by PID: %d \n</body>\n</html>\n",
+                           *pid, req_type, route->host, route->user_string, route->route, *pid); // write a variadic function for this.
 
     char *buf = malloc(len_str + 1); //TODO Free
-    snprintf(buf, len_str + 1, "<html> \
-                                    <head>  \
-                                        <title> Hello Process %d ! </title> \
-                                    </head> \
-                                    <body> \
-                                        <h1>%s Request</h1> \
-                                        <p> Host: %s <p> User-Agent: %s\
-                                    </body> \
-                                    </html>",
-             *pid, req_type, route->host, route->user_string);
+    snprintf(buf, len_str + 1, "<html>\n<head>\n<title>Hello Process %d !</title>\n</head>\n<body>\n<h1>%s Request</h1>\n<p> Host: %s \n<p> User-Agent: %s \n<p> Looking for: <b>%s</b> \n<p>Answered by PID: %d \n</body>\n</html>\n",
+             *pid, req_type, route->host, route->user_string, route->route, *pid);
 
-    return buf;
+    int output = snprintf(NULL, 0, fmt, strlen(buf), buf);
+    char *out = malloc(output + 1);
+
+    snprintf(out, output + 1, fmt, strlen(buf), buf);
+
+    free(buf);
+    return out;
 }
 
 void handle_new_conn(int accepted_socket, void *additional_args)
@@ -69,7 +65,6 @@ void handle_new_conn(int accepted_socket, void *additional_args)
     }
 
     Route *route = parse_http(message);
-    pretty_print_route(route);
 
     char *output = humanize(route, &child_pid);
 
