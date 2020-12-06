@@ -1,4 +1,11 @@
 #include "server.h"
+#include <pthread.h>
+
+const char *fmt = "HTTP/1.1 200 OK\r\n"
+                  "Content-length: %ld\r\n"
+                  "Content-Type: %s\r\n"
+                  "\r\n"
+                  "%s";
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -22,12 +29,6 @@ void check(int value, char *err_str)
 
 char *humanize(Route *route, pid_t *pid)
 {
-    const char *fmt = "HTTP/1.1 200 OK\r\n"
-                      "Content-length: %ld\r\n"
-                      "Content-Type: text/html\r\n"
-                      "\r\n"
-                      "%s";
-
     char *req_type = translate_reqtype(route->type);
 
     int len_str = snprintf(NULL, 0, "<html>\n<head>\n<title>Hello Process %d !</title>\n</head>\n<body>\n<h1>%s Request</h1>\n<p> Host: %s \n<p> User-Agent: %s \n<p> Looking for: <b>%s</b> \n<p>Answered by PID: %d \n</body>\n</html>\n",
@@ -37,17 +38,20 @@ char *humanize(Route *route, pid_t *pid)
     snprintf(buf, len_str + 1, "<html>\n<head>\n<title>Hello Process %d !</title>\n</head>\n<body>\n<h1>%s Request</h1>\n<p> Host: %s \n<p> User-Agent: %s \n<p> Looking for: <b>%s</b> \n<p>Answered by PID: %d \n</body>\n</html>\n",
              *pid, req_type, route->host, route->user_string, route->route, *pid);
 
-    int output = snprintf(NULL, 0, fmt, strlen(buf), buf);
+    int output = snprintf(NULL, 0, fmt, strlen(buf), "text/html", buf);
+
     char *out = malloc(output + 1);
 
-    snprintf(out, output + 1, fmt, strlen(buf), buf);
+    snprintf(out, output + 1, fmt, strlen(buf), "text/html", buf);
 
     free(buf);
     return out;
 }
 
-void handle_new_conn(int accepted_socket, void *additional_args)
+void handle_new_conn(int *p_accepted_socket, void *additional_args)
 {
+    int accepted_socket = *p_accepted_socket;
+    free(p_accepted_socket);
     char *from = (char *)additional_args;
     printf(">> Incoming message from %s : \n", from);
 
@@ -66,12 +70,9 @@ void handle_new_conn(int accepted_socket, void *additional_args)
 
     Route *route = parse_http(message);
 
+    read_file(route);
+
     char *output = humanize(route, &child_pid);
-
-    char *hello_msg = "Hello Stranger!";
-    char *outgoing = (char *)malloc((20 * sizeof(char)) + sizeof(hello_msg) + 1); //Todo: FREE
-
-    sprintf(outgoing, "%s from PID: %d \n", hello_msg, child_pid);
 
     int write_result = write(accepted_socket, output, strlen(output));
     if (write_result < 0)
@@ -84,7 +85,6 @@ void handle_new_conn(int accepted_socket, void *additional_args)
 
     free(output);
     free(route);
-    free(outgoing);
 }
 
 Route *parse_route(char *token, Route *req)
@@ -208,7 +208,7 @@ int main()
     check(bind(server_file_d, res->ai_addr, res->ai_addrlen), "Failed to bind socket to address/port");
 
     //Now listen to the bound port
-    check(listen(server_file_d, 1), "Failed to listen");
+    check(listen(server_file_d, BACKLOG), "Failed to listen");
     //listen doesn't mean accept
 
     socklen_t addrlen = sizeof(incoming_addr);
@@ -226,11 +226,19 @@ int main()
 
         pthread_t thread;
 
-        thread_args args = {accepted_socket, from};
+        int *p_accepted_socket = malloc(sizeof(int));
 
-        pthread_create(&thread, NULL, &handle_conn_wrapper, (void *)&args); // don't want any special attributes(detachable threads, etc), we just want default
+        *p_accepted_socket = accepted_socket;
 
-        // if (!fork())
+        thread_args *args = malloc(sizeof(thread_args)); // we want to malloc because we want whatever is in the main thread to point to a "NEW" memory location so that we don't have a data race
+        memset(args, '\0', sizeof(&args));
+
+        args->socket = p_accepted_socket;
+        args->host_name = strdup(from); //clone
+
+        pthread_create(&thread, NULL, &handle_conn_wrapper, args); // don't want any special attributes(detachable threads, etc), we just want default
+
+        // if (!fork()) // multiprocessing version
         // {
         //     close(server_file_d);
         //     handle_new_conn(accepted_socket, (void *)from);
@@ -238,13 +246,26 @@ int main()
         // }
         // close(accepted_socket);
     }
-
+    close(server_file_d);
     return 0;
 }
 void *handle_conn_wrapper(void *arg)
 {
     thread_args *args = (thread_args *)arg;
     handle_new_conn(args->socket, args->host_name);
+    free(args);
     pthread_exit(NULL);
     return NULL;
+}
+
+void read_file(Route *route)
+{
+    //route requested resource = file name inside of files dir
+    struct stat sbuf;
+    char files[] = "./files";
+    char *fp = realpath(files, NULL);
+    char *c_fp = malloc(strlen(fp) + strlen(route->route) + 1);
+    sprintf(c_fp, "%s%s", fp, route->route);
+    printf("file path %s\n", c_fp);
+    free(c_fp);
 }

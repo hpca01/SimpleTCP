@@ -1,10 +1,10 @@
 CC =gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -g -pthread
 RM = rm
 
 all: server.c client.c
-	$(CC) $(CFLAGS) -o server server.c -lpthread
-	$(CC) $(CFLAGS) -o client client.c -lpthread
+	$(CC) $(CFLAGS) -o server server.c
+	$(CC) $(CFLAGS) -o client client.c
 	./server
 	make ./client
 
