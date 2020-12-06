@@ -22,33 +22,18 @@ void check(int value, char *err_str)
 
 char *humanize(Route *route, int *pid)
 {
-    char *req_type;
-    switch (route->type)
-    {
-    case GET:
-        req_type = "GET";
-        break;
-    case POST:
-        req_type = "POST";
-        break;
-    case PUT:
-        req_type = "PUT";
-        break;
-    default:
-        req_type = "OTHER";
-        break;
-    }
+    char *req_type = translate_reqtype(route->type);
 
-    int len_str = snprintf(NULL, 0, "<html> \
-                                    <head>  \
-                                        <title> Hello Process %d ! </title> \
-                                    </head> \
-                                    <body> \
-                                        <h1>%s Request</h1> \
-                                        <p> Host: %s <p> User-Agent: %s\
-                                    </body> \
-                                    </html>",
-                           *pid, req_type, route->host, route->user_string);
+    pretty_print_route(route);
+
+    // int len_str = snprintf(NULL, 0, "<html><head><title> Hello Process %d ! </title></head><body><h1>%s Request</h1><p> Host: %s <p> User-Agent: %s</body></html>",
+    //                        pid, req_type, route->host, route->user_string);
+
+    printf("\tAt process %d\n \tWe have a req type of %s\n\tFrom a host %s\n\tUsing the following user string %s\n", pid, req_type, route->host, route->user_string);
+    int len_str = printf("<html>\n<head>\n<title>Hello Process %d !</title>\n</head>\n<body>\n<h1>%s Request</h1>\n <p> Host: %s \n<p> User-Agent: %s\n</body>\n</html>\n",
+                         pid, req_type, route->host, route->user_string);
+
+    printf("Size of string %d", len_str);
 
     char *buf = malloc(len_str + 1); //TODO Free
     snprintf(buf, len_str + 1, "<html> \
@@ -84,8 +69,11 @@ void handle_new_conn(int accepted_socket, void *additional_args)
     }
 
     Route *route = parse_http(message);
+    pretty_print_route(route);
 
-    // char *output = humanize(&route, &child_pid);
+    // char *output = humanize(route, child_pid);
+
+    // free(output);
 
     char *hello_msg = "Hello Stranger!";
     char *outgoing = (char *)malloc((20 * sizeof(char)) + sizeof(hello_msg) + 1); //Todo: FREE
@@ -101,7 +89,7 @@ void handle_new_conn(int accepted_socket, void *additional_args)
     }
     close(accepted_socket);
     // free(output);
-    // free(route);
+    free(route);
     free(outgoing);
 }
 
@@ -109,15 +97,16 @@ Route *parse_route(char *token, Route *req)
 {
     char *request;
     int i = 0;
-    printf("Token to parse route from %s\n", token);
-
     while ((request = strsep(&token, " ")) != NULL)
     {
         if (i == 0)
         {
             // req type
+            printf("\n - reqtype -%s- sizeof:%d \n", request, (sizeof(request) / sizeof(request[0]))); //TODO: FIX STRCMP issues
             if (strcmp(request, "GET"))
+            {
                 req->type = GET;
+            }
             else if (strcmp(request, "POST"))
                 req->type = POST;
             else if (strcmp(request, "PUT"))
@@ -149,7 +138,7 @@ char *translate_reqtype(ReqType type)
 void pretty_print_route(Route *route)
 {
     char *type = translate_reqtype(route->type);
-    printf("Route {\n\t %s\n\t%s\n\t%s\n\t}\n", type, route->route, route->host);
+    printf("Route :\n\t%s\n\t%s\n\t%s\n", type, route->route, route->host);
     return;
 }
 
@@ -161,14 +150,26 @@ Route *parse_http(char *input)
     char *token;
 
     //first line is request type, resource uri and http protocol
+    Route *route = malloc(sizeof(Route));
 
+    int i = 0;
     while (token = strtok_r(cp, "\n", &cp))
     {
-        printf("- %s\n", token);
+        if (i == 0)
+        {
+            route = parse_route(token, route);
+        }
+        else if (i == 1)
+        {
+            char *space = strchr(token, 32); //32 is space character
+            if (space != NULL)
+                route->host = space + 1; // add one to get the next char over don't want to get the extra space
+        }
+        else if (i == 2)
+            route->user_string = strchr(token, 32) + 1;
+        i += 1;
     }
-
-    
-    return NULL;
+    return route;
 }
 
 int main(int argc, char const *argv[])

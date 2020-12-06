@@ -34,3 +34,4 @@ Route *parse_http(char *input);
 Route *parse_route(char *input, Route *req);
 char *humanize(Route *route, int *pid);
 void pretty_print_route(Route *route);
+char *translate_reqtype(ReqType type);
