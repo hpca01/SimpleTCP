@@ -12,12 +12,6 @@
 #define PORT_NUM 8080
 #define BUFF_SIZE 20000
 
-void *get_in_addr(struct sockaddr *sa);
-void check(int value, char *err_str);
-void handle_new_conn(int accepted_socket, void *additional_args);
-void parse_http(char *input);
-Route *parse_route(char *input);
-
 typedef enum
 {
     GET,
@@ -29,4 +23,14 @@ typedef struct
 {
     ReqType type;
     char *route;
+    char *host;
+    char *user_string;
 } Route;
+
+void *get_in_addr(struct sockaddr *sa);
+void check(int value, char *err_str);
+void handle_new_conn(int accepted_socket, void *additional_args);
+Route *parse_http(char *input);
+Route *parse_route(char *input, Route *req);
+char *humanize(Route *route, int *pid);
+void pretty_print_route(Route *route);

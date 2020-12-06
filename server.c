@@ -20,6 +20,51 @@ void check(int value, char *err_str)
     }
 }
 
+char *humanize(Route *route, int *pid)
+{
+    char *req_type;
+    switch (route->type)
+    {
+    case GET:
+        req_type = "GET";
+        break;
+    case POST:
+        req_type = "POST";
+        break;
+    case PUT:
+        req_type = "PUT";
+        break;
+    default:
+        req_type = "OTHER";
+        break;
+    }
+
+    int len_str = snprintf(NULL, 0, "<html> \
+                                    <head>  \
+                                        <title> Hello Process %d ! </title> \
+                                    </head> \
+                                    <body> \
+                                        <h1>%s Request</h1> \
+                                        <p> Host: %s <p> User-Agent: %s\
+                                    </body> \
+                                    </html>",
+                           *pid, req_type, route->host, route->user_string);
+
+    char *buf = malloc(len_str + 1); //TODO Free
+    snprintf(buf, len_str + 1, "<html> \
+                                    <head>  \
+                                        <title> Hello Process %d ! </title> \
+                                    </head> \
+                                    <body> \
+                                        <h1>%s Request</h1> \
+                                        <p> Host: %s <p> User-Agent: %s\
+                                    </body> \
+                                    </html>",
+             *pid, req_type, route->host, route->user_string);
+
+    return buf;
+}
+
 void handle_new_conn(int accepted_socket, void *additional_args)
 {
     char *from = (char *)additional_args;
@@ -38,12 +83,14 @@ void handle_new_conn(int accepted_socket, void *additional_args)
         exit(EXIT_FAILURE);
     }
 
-    parse_http(message);
+    Route *route = parse_http(message);
+
+    // char *output = humanize(&route, &child_pid);
 
     char *hello_msg = "Hello Stranger!";
-    char *outgoing = (char *)malloc((20 * sizeof(char)) + sizeof(hello_msg)); //Todo: FREE
+    char *outgoing = (char *)malloc((20 * sizeof(char)) + sizeof(hello_msg) + 1); //Todo: FREE
 
-    sprintf(outgoing, "%s from PID: %d \n", hello_msg, child_pid);
+    sprintf(outgoing, "%s from PID: %d \n\0", hello_msg, child_pid);
 
     int write_result = write(accepted_socket, outgoing, strlen(outgoing));
     if (write_result < 0)
@@ -53,15 +100,18 @@ void handle_new_conn(int accepted_socket, void *additional_args)
         exit(EXIT_FAILURE);
     }
     close(accepted_socket);
+    // free(output);
+    // free(route);
     free(outgoing);
 }
 
-Route *parse_route(char *token)
+Route *parse_route(char *token, Route *req)
 {
     char *request;
-    Route *req = malloc(sizeof(Route)); // Todo Free
+    int i = 0;
+    printf("Token to parse route from %s\n", token);
 
-    for (int i = 0; (request = strsep(&token, " ")) != NULL; i++)
+    while ((request = strsep(&token, " ")) != NULL)
     {
         if (i == 0)
         {
@@ -73,13 +123,37 @@ Route *parse_route(char *token)
             else if (strcmp(request, "PUT"))
                 req->type = PUT;
         }
-        if (i == 1)
+        else if (i == 1)
+        {
             req->route = request;
+        }
+        i++;
     }
     return req;
 }
 
-void parse_http(char *input)
+char *translate_reqtype(ReqType type)
+{
+    switch (type)
+    {
+    case GET:
+        return "GET";
+    case POST:
+        return "POST";
+    case PUT:
+        return "PUT";
+    }
+    return "OTHER";
+}
+
+void pretty_print_route(Route *route)
+{
+    char *type = translate_reqtype(route->type);
+    printf("Route {\n\t %s\n\t%s\n\t%s\n\t}\n", type, route->route, route->host);
+    return;
+}
+
+Route *parse_http(char *input)
 {
     char *cp = strdup(input);
     char *saveptr = NULL;
@@ -87,13 +161,14 @@ void parse_http(char *input)
     char *token;
 
     //first line is request type, resource uri and http protocol
-    token = strtok_r(cp, "\n", &cp);
-    Route *route = parse_route(&token);
 
     while (token = strtok_r(cp, "\n", &cp))
     {
         printf("- %s\n", token);
     }
+
+    
+    return NULL;
 }
 
 int main(int argc, char const *argv[])
