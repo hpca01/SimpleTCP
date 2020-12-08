@@ -9,7 +9,6 @@ As title states, this is a simple TCP server written in C.
 make
 ```
 
-You should see warnings about unsed parameters, ignore those. They're the standard `argc` and `argv` that are in `main` functions.
 
 You will see
 ```
