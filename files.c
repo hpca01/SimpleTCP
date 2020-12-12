@@ -3,6 +3,8 @@
 #include <errno.h>
 #include <stdlib.h>
 
+//eventuall move all file related code into here
+
 void read_file();
 
 int main()
@@ -34,9 +36,6 @@ void read_file()
         perror("Cannot open file");
 
     fread(buffer, sizeof(unsigned char), sbuf.st_size, fp);
-
-    printf("\n\n");
-    printf("File contents : %s\n\n", buffer);
     fflush(stdout);
     free(buffer);
 }
