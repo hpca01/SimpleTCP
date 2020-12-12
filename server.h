@@ -13,8 +13,11 @@
 #define PORT_NUM 8080
 #define BUFF_SIZE 20000
 #define BACKLOG 100
+#define HTML_FILE "text/html"
+#define IMG_JPEG_FILE "image/jpeg"
+#define PDF_FILE "application/pdf"
 
-extern const char *fmt;
+extern const char *FMT;
 
 typedef enum
 {
@@ -42,6 +45,7 @@ typedef struct
 {
     unsigned char *buffer;
     struct stat fp;
+    char *filetype;
 } FileOut;
 
 void *get_in_addr(struct sockaddr *sa);
@@ -53,5 +57,7 @@ Route *parse_route(char *input, Route *req);
 char *humanize(Route *route, pid_t *pid);
 void pretty_print_route(Route *route);
 char *translate_reqtype(ReqType type);
-void read_file(Route *route, FileOut *out);
+int read_file(Route *route, FileOut *out);
 void write_file(FileOut *out, int sockfd);
+char *parse_file_type(char *input);
+void free_fout(FileOut *out);

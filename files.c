@@ -39,3 +39,7 @@ void read_file()
     fflush(stdout);
     free(buffer);
 }
+
+void parse_file_type()
+{
+}

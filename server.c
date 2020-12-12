@@ -1,7 +1,7 @@
 #include "server.h"
 #include <pthread.h>
 
-const char *fmt = "HTTP/1.1 200 OK\r\n"
+const char *FMT = "HTTP/1.1 200 OK\r\n"
                   "Content-length: %ld\r\n"
                   "Content-Type: %s\r\n"
                   "\r\n"
@@ -17,7 +17,7 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-//help w/ troubleshooting and simplifications.
+//easy way to handle fails.
 void check(int value, char *err_str)
 {
     if (value < 0)
@@ -38,11 +38,11 @@ char *humanize(Route *route, pid_t *pid)
     snprintf(buf, len_str + 1, "<html>\n<head>\n<title>Hello Process %d !</title>\n</head>\n<body>\n<h1>%s Request</h1>\n<p> Host: %s \n<p> User-Agent: %s \n<p> Looking for: <b>%s</b> \n<p>Answered by PID: %d \n</body>\n</html>\n",
              *pid, req_type, route->host, route->user_string, route->route, *pid);
 
-    int output = snprintf(NULL, 0, fmt, strlen(buf), "text/html", buf);
+    int output = snprintf(NULL, 0, FMT, strlen(buf), "text/html", buf);
 
     char *out = malloc(output + 1);
 
-    snprintf(out, output + 1, fmt, strlen(buf), "text/html", buf);
+    snprintf(out, output + 1, FMT, strlen(buf), "text/html", buf);
 
     free(buf);
     return out;
@@ -55,7 +55,7 @@ void handle_new_conn(int *p_accepted_socket, void *additional_args)
     char *from = (char *)additional_args;
     printf(">> Incoming message from %s : \n", from);
 
-    pid_t child_pid = getpid(); // underlying size is an int, so #10 chars max.
+    //pid_t child_pid = getpid(); // underlying size is an int, so #10 chars max.
 
     char message[BUFF_SIZE] = {0};
 
@@ -72,20 +72,32 @@ void handle_new_conn(int *p_accepted_socket, void *additional_args)
 
     FileOut *file_out = calloc(1, sizeof(FileOut));
 
-    read_file(route, file_out);
+    int success = read_file(route, file_out);
 
-    char *output = humanize(route, &child_pid);
-
-    int write_result = write(accepted_socket, output, strlen(output));
-    if (write_result < 0)
+    switch (success)
     {
-        close(accepted_socket);
-        perror("Error writing outgoing msg");
-        exit(EXIT_FAILURE);
+    case -1: //error locating file
+        break;
+    case -2: //file extension not supported
+        break;
+    case 1: //works!
+        write_file(file_out, accepted_socket);
+        free_fout(file_out);
+        break;
     }
+
+    // char *output = humanize(route, &child_pid);
+
+    // int write_result = write(accepted_socket, output, strlen(output));
+    // if (write_result < 0)
+    // {
+    //     close(accepted_socket);
+    //     perror("Error writing outgoing msg");
+    //     exit(EXIT_FAILURE);
+    // }
     close(accepted_socket);
 
-    free(output);
+    //free(output);
     free(route);
 }
 
@@ -251,19 +263,26 @@ void *handle_conn_wrapper(void *arg)
     pthread_exit(NULL);
 }
 
-void read_file(Route *route, FileOut *file_out)
+/// read file function takes p_Route and p_FileOut
+///
+/// return -1 if file not found
+/// return -2 if file not supported
+/// return 1 if found and supported
+int read_file(Route *route, FileOut *file_out)
 {
     //route requested resource = file name inside of files dir
     struct stat sbuf;
     char files[] = "./files";
     char *fp = realpath(files, NULL);
-    char *c_fp = malloc(strlen(fp) + strlen(route->route) + 1);
+    char *c_fp = malloc(strlen(fp) + strlen(route->route) + 1); //TODO FREE
     sprintf(c_fp, "%s%s", fp, route->route);
     printf("\n\nFile path %s\n", c_fp);
 
     if (stat(files, &sbuf) < 0)
     {
         perror("Error locating file");
+        free(c_fp);
+        return -1;
     }
 
     unsigned char *buffer = calloc(sbuf.st_size, sizeof(unsigned char)); //TODO Free
@@ -278,7 +297,69 @@ void read_file(Route *route, FileOut *file_out)
 
     file_out->buffer = buffer;
     file_out->fp = sbuf;
+    char *ftype = parse_file_type(c_fp);
+    if (ftype == NULL)
+    {
+        perror("Error file not supported");
+        free(c_fp);
+        free(buffer);
+        fclose(f_to_read);
+        return -2;
+    }
+    file_out->filetype = ftype;
 
     fflush(stdout);
     free(c_fp);
+    fclose(f_to_read);
+    return 1;
+}
+
+char *parse_file_type(char *input)
+{
+    if (strstr(input, ".html") != NULL)
+    {
+        char *out = calloc(sizeof(char), strlen(HTML_FILE));
+        strcpy(out, HTML_FILE);
+        return out;
+    }
+    if (strstr(input, ".pdf") != NULL)
+    {
+        char *out = calloc(sizeof(char), strlen(PDF_FILE));
+        strcpy(out, PDF_FILE);
+        return out;
+    }
+    if (strstr(input, ".jpg") != NULL)
+    {
+        char *out = calloc(sizeof(char), strlen(IMG_JPEG_FILE));
+        strcpy(out, IMG_JPEG_FILE);
+        return out;
+    }
+    if (strstr(input, ".jpeg") != NULL)
+    {
+        char *out = calloc(sizeof(char), strlen(IMG_JPEG_FILE));
+        strcpy(out, IMG_JPEG_FILE);
+        return out;
+    }
+    return NULL;
+}
+
+void free_fout(FileOut *out)
+{
+    free(out->filetype);
+    free(out->buffer);
+    free(out);
+}
+
+void write_file(FileOut *out, int accepted_socket)
+{
+    FILE *sockfd = fdopen(accepted_socket, "r+");
+    fprintf(sockfd, "HTTP/1.1 200 OK\n");
+    fprintf(sockfd, "Server: Tiny Web Server\n");
+    fprintf(sockfd, "Content-length: %d\n", (int)out->fp.st_size);
+    fprintf(sockfd, "Content-type: %s\n", out->filetype);
+    fprintf(sockfd, "\r\n");
+
+    fwrite(out->buffer, sizeof(unsigned char), out->fp.st_size, sockfd);
+    fflush(sockfd);
+    fclose(sockfd);
 }
