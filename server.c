@@ -70,7 +70,9 @@ void handle_new_conn(int *p_accepted_socket, void *additional_args)
 
     Route *route = parse_http(message);
 
-    read_file(route);
+    FileOut *file_out = calloc(1, sizeof(FileOut));
+
+    read_file(route, file_out);
 
     char *output = humanize(route, &child_pid);
 
@@ -237,14 +239,6 @@ int main()
         args->host_name = strdup(from); //clone
 
         pthread_create(&thread, NULL, &handle_conn_wrapper, args); // don't want any special attributes(detachable threads, etc), we just want default
-
-        // if (!fork()) // multiprocessing version
-        // {
-        //     close(server_file_d);
-        //     handle_new_conn(accepted_socket, (void *)from);
-        //     exit(EXIT_SUCCESS);
-        // }
-        // close(accepted_socket);
     }
     close(server_file_d);
     return 0;
@@ -255,10 +249,9 @@ void *handle_conn_wrapper(void *arg)
     handle_new_conn(args->socket, args->host_name);
     free(args);
     pthread_exit(NULL);
-    return NULL;
 }
 
-void read_file(Route *route)
+void read_file(Route *route, FileOut *file_out)
 {
     //route requested resource = file name inside of files dir
     struct stat sbuf;
@@ -266,6 +259,26 @@ void read_file(Route *route)
     char *fp = realpath(files, NULL);
     char *c_fp = malloc(strlen(fp) + strlen(route->route) + 1);
     sprintf(c_fp, "%s%s", fp, route->route);
-    printf("file path %s\n", c_fp);
+    printf("\n\nFile path %s\n", c_fp);
+
+    if (stat(files, &sbuf) < 0)
+    {
+        perror("Error locating file");
+    }
+
+    unsigned char *buffer = calloc(sbuf.st_size, sizeof(unsigned char)); //TODO Free
+
+    FILE *f_to_read = fopen(c_fp, "rb");
+    fread(buffer, sizeof(unsigned char), sbuf.st_size, f_to_read);
+    fflush(stdout);
+
+    printf("\nSize of file : %ld\n", sbuf.st_size);
+
+    printf("\n%s\n", buffer);
+
+    file_out->buffer = buffer;
+    file_out->fp = sbuf;
+
+    fflush(stdout);
     free(c_fp);
 }

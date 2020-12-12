@@ -38,6 +38,12 @@ typedef struct
     char *host_name;
 } thread_args;
 
+typedef struct
+{
+    unsigned char *buffer;
+    struct stat fp;
+} FileOut;
+
 void *get_in_addr(struct sockaddr *sa);
 void check(int value, char *err_str);
 void *handle_conn_wrapper(void *arg);
@@ -47,4 +53,5 @@ Route *parse_route(char *input, Route *req);
 char *humanize(Route *route, pid_t *pid);
 void pretty_print_route(Route *route);
 char *translate_reqtype(ReqType type);
-void read_file(Route *route);
+void read_file(Route *route, FileOut *out);
+void write_file(FileOut *out, int sockfd);
