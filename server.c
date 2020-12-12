@@ -27,6 +27,7 @@ void check(int value, char *err_str)
     }
 }
 
+/// Deprecated
 char *humanize(Route *route, pid_t *pid)
 {
     char *req_type = translate_reqtype(route->type);
@@ -352,6 +353,7 @@ void free_fout(FileOut *out)
 
 void write_file(FileOut *out, int accepted_socket)
 {
+    //saw an implementation w/ mmap being used...thinking of using that
     FILE *sockfd = fdopen(accepted_socket, "r+");
     fprintf(sockfd, "HTTP/1.1 200 OK\n");
     fprintf(sockfd, "Server: Tiny Web Server\n");
@@ -359,7 +361,7 @@ void write_file(FileOut *out, int accepted_socket)
     fprintf(sockfd, "Content-type: %s\n", out->filetype);
     fprintf(sockfd, "\r\n");
 
-    fwrite(out->buffer, 1, out->fp.st_size, sockfd);
+    fwrite(out->buffer, sizeof(unsigned char), out->fp.st_size, sockfd); //should check to see if all of the content is written, there is no guarantee that fwrite will write ALL of the data out.
     fflush(sockfd);
     fclose(sockfd);
 }
