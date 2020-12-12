@@ -1,5 +1,5 @@
 ## Simple TCP server
-As title states, this is a simple TCP server written in C. A good weekend project.
+As title states, this is a simple TCP server written in C.
 
 
 
@@ -9,7 +9,6 @@ As title states, this is a simple TCP server written in C. A good weekend projec
 make
 ```
 
-You should see warnings about unsed parameters, ignore those. They're the standard `argc` and `argv` that are in `main` functions.
 
 You will see
 ```
@@ -22,19 +21,19 @@ After which you can create a seperate terminal and invoke the client:
 ```
 ./client
 
-rtn -> Hello Stranger!
 ```
-
-If you're curious about headers in a standard GET request, you can  browse to `localhost:8080/index.html`, and you'll see the same message returned(not done yet).
+The output is a static HTML page w/ client's request included.
 
 When you're done and want to clean up the artifacts:
 ```
 make clean
 ```
 
+To-Do:
+
 - [x] Write simple TCP server
 - [x] Write client
 - [x] Parse Headers
 - [x] Assemble return with correct HTTP code.
 - [x] Add multi-threading, currently using multi-processing.
-- [ ] Turn it into a multi-threaded file-server! :D
+- [ ] Turn it into a multi-threaded file-server!
