@@ -278,7 +278,7 @@ int read_file(Route *route, FileOut *file_out)
     sprintf(c_fp, "%s%s", fp, route->route);
     printf("\n\nFile path %s\n", c_fp);
 
-    if (stat(files, &sbuf) < 0)
+    if (stat(c_fp, &sbuf) < 0)
     {
         perror("Error locating file");
         free(c_fp);
@@ -359,7 +359,7 @@ void write_file(FileOut *out, int accepted_socket)
     fprintf(sockfd, "Content-type: %s\n", out->filetype);
     fprintf(sockfd, "\r\n");
 
-    fwrite(out->buffer, sizeof(unsigned char), out->fp.st_size, sockfd);
+    fwrite(out->buffer, 1, out->fp.st_size, sockfd);
     fflush(sockfd);
     fclose(sockfd);
 }
