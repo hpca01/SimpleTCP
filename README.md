@@ -36,4 +36,6 @@ To-Do:
 - [x] Parse Headers
 - [x] Assemble return with correct HTTP code.
 - [x] Add multi-threading, currently using multi-processing.
-- [ ] Turn it into a multi-threaded file-server!
+- [x] Turn it into a multi-threaded file-server! -- Only works w/ jpeg, jpg, html, pdf files for now...
+- [ ] Write out client to do a load test
+- [ ] Valgrind Test on server after client is written
