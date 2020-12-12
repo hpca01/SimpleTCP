@@ -356,7 +356,7 @@ void write_file(FileOut *out, int accepted_socket)
     //saw an implementation w/ mmap being used...thinking of using that
     FILE *sockfd = fdopen(accepted_socket, "r+");
     fprintf(sockfd, "HTTP/1.1 200 OK\n");
-    fprintf(sockfd, "Server: Tiny Web Server\n");
+    fprintf(sockfd, "Server: My Simple TCP Server\n");
     fprintf(sockfd, "Content-length: %d\n", (int)out->fp.st_size);
     fprintf(sockfd, "Content-type: %s\n", out->filetype);
     fprintf(sockfd, "\r\n");
