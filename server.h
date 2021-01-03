@@ -1,3 +1,6 @@
+#ifndef SERVER_H
+#define SERVER_H
+
 #include <sys/socket.h>
 #include <errno.h>
 #include <netinet/in.h>
@@ -16,6 +19,7 @@
 #define HTML_FILE "text/html"
 #define IMG_JPEG_FILE "image/jpeg"
 #define PDF_FILE "application/pdf"
+#define THREAD_POOL_SIZE 20
 
 extern const char *FMT;
 
@@ -35,7 +39,7 @@ typedef struct
     char *user_string;
 } Route;
 
-typedef struct
+typedef struct thread_args
 {
     int *socket;
     char *host_name;
@@ -47,6 +51,8 @@ typedef struct
     struct stat fp;
     char *filetype;
 } FileOut;
+
+pthread_t tpool[THREAD_POOL_SIZE];
 
 void *get_in_addr(struct sockaddr *sa);
 void check(int value, char *err_str);
@@ -61,3 +67,5 @@ int read_file(Route *route, FileOut *out);
 void write_file(FileOut *out, int sockfd);
 char *parse_file_type(char *input);
 void free_fout(FileOut *out);
+
+#endif

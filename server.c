@@ -1,5 +1,6 @@
 #include "server.h"
 #include <pthread.h>
+#include "queue.h"
 
 const char *FMT = "HTTP/1.1 200 OK\r\n"
                   "Content-length: %ld\r\n"
@@ -182,6 +183,12 @@ Route *parse_http(char *input)
 int main()
 {
 
+    //initialize all the threads
+    for (int i = 0; i < THREAD_POOL_SIZE; i++)
+    {
+        pthread_create(&tpool[i], NULL, handle_conn_wrapper, NULL);
+    }
+
     struct addrinfo hints, *res;
     struct sockaddr_storage incoming_addr; // this is to make it ipv4 or ipv6 agnostic
     int server_file_d;
@@ -239,8 +246,6 @@ int main()
 
         inet_ntop(incoming_addr.ss_family, get_in_addr((struct sockaddr *)&incoming_addr), from, sizeof(from));
 
-        pthread_t thread;
-
         int *p_accepted_socket = malloc(sizeof(int));
 
         *p_accepted_socket = accepted_socket;
@@ -250,17 +255,28 @@ int main()
 
         args->socket = p_accepted_socket;
         args->host_name = strdup(from); //clone
+        //need to put thread args into queue and then have thread func take them off and work on them
+        enqueue(&args);
 
+        /*pthread_t thread;
         pthread_create(&thread, NULL, &handle_conn_wrapper, args); // don't want any special attributes(detachable threads, etc), we just want default
+        */
     }
     close(server_file_d);
     return 0;
 }
 void *handle_conn_wrapper(void *arg)
 {
-    thread_args *args = (thread_args *)arg;
-    handle_new_conn(args->socket, args->host_name);
-    free(args);
+    while (1)
+    {
+        thread_args *args = dequeue();
+        if (args != NULL)
+        {
+            handle_new_conn(args->socket, args->host_name);
+            free(args);
+        }
+    }
+
     pthread_exit(NULL);
 }
 
