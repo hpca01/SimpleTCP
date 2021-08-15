@@ -52,8 +52,6 @@ typedef struct
     char *filetype;
 } FileOut;
 
-pthread_t tpool[THREAD_POOL_SIZE];
-
 void *get_in_addr(struct sockaddr *sa);
 void check(int value, char *err_str);
 void *handle_conn_wrapper(void *arg);
