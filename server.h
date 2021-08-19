@@ -19,6 +19,7 @@
 #define HTML_FILE "text/html"
 #define IMG_JPEG_FILE "image/jpeg"
 #define PDF_FILE "application/pdf"
+#define FAVICO "image/x-icon"
 #define THREAD_POOL_SIZE 20
 
 extern const char *FMT;

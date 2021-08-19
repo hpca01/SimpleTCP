@@ -8,6 +8,10 @@ const char *FMT = "HTTP/1.1 200 OK\r\n"
                   "\r\n"
                   "%s";
 
+const char *file_not_supported = "File Not Supported";
+
+const char *file_not_found = "File requested is NOT found";
+
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
@@ -57,8 +61,6 @@ void handle_new_conn(int *p_accepted_socket, void *additional_args)
     char *from = (char *)additional_args;
     printf(">> Incoming message from %s : \n", from);
 
-    //pid_t child_pid = getpid(); // underlying size is an int, so #10 chars max.
-
     char message[BUFF_SIZE] = {0};
 
     long value = read(accepted_socket, message, BUFF_SIZE); //don't use pread socket is not "seekable"
@@ -79,8 +81,18 @@ void handle_new_conn(int *p_accepted_socket, void *additional_args)
     switch (success)
     {
     case -1: //error locating file
+        if(write(accepted_socket, file_not_found, strlen(file_not_found))<0){
+            close(accepted_socket);
+            perror("Error communicating file not found");
+            exit(EXIT_FAILURE);
+        }
         break;
     case -2: //file extension not supported
+        if(write(accepted_socket, file_not_supported, strlen(file_not_supported)) < 0){
+            close(accepted_socket);
+            perror("Error communicating file extension not supported");
+            exit(EXIT_FAILURE);
+        }
         break;
     case 1: //works!
         write_file(file_out, accepted_socket);
@@ -280,6 +292,10 @@ int read_file(Route *route, FileOut *file_out)
     struct stat sbuf;
     char files[] = "./files";
     char *fp = realpath(files, NULL);
+    //error check route
+    if(route->route == NULL){
+        return -1;
+    }
     char *c_fp = malloc(strlen(fp) + strlen(route->route) + 1); //TODO FREE
     sprintf(c_fp, "%s%s", fp, route->route);
     printf("\n\nFile path %s\n", c_fp);
@@ -346,6 +362,12 @@ char *parse_file_type(char *input)
         strcpy(out, IMG_JPEG_FILE);
         return out;
     }
+    if(strstr(input, ".ico") != NULL){
+        char *out = calloc(sizeof(char), strlen(FAVICO)+1);
+        strcpy(out, FAVICO);
+        return out;
+    }
+
     return NULL;
 }
 
