@@ -194,7 +194,7 @@ int main()
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    check(getaddrinfo(NULL, "8080", &hints, &res), "Error with instantiating addrinfo struct");
+    check(getaddrinfo(NULL, PORT_NUM, &hints, &res), "Error with instantiating addrinfo struct");
 
     // Create Socket, bind to it
     // If Protocol is 0 it's automatically selected
@@ -324,25 +324,25 @@ char *parse_file_type(char *input)
 {
     if (strstr(input, ".html") != NULL)
     {
-        char *out = calloc(sizeof(char), strlen(HTML_FILE));
+        char *out = calloc(sizeof(char), strlen(HTML_FILE)+1);
         strcpy(out, HTML_FILE);
         return out;
     }
     if (strstr(input, ".pdf") != NULL)
     {
-        char *out = calloc(sizeof(char), strlen(PDF_FILE));
+        char *out = calloc(sizeof(char), strlen(PDF_FILE)+1);
         strcpy(out, PDF_FILE);
         return out;
     }
     if (strstr(input, ".jpg") != NULL)
     {
-        char *out = calloc(sizeof(char), strlen(IMG_JPEG_FILE));
+        char *out = calloc(sizeof(char), strlen(IMG_JPEG_FILE)+1);
         strcpy(out, IMG_JPEG_FILE);
         return out;
     }
     if (strstr(input, ".jpeg") != NULL)
     {
-        char *out = calloc(sizeof(char), strlen(IMG_JPEG_FILE));
+        char *out = calloc(sizeof(char), strlen(IMG_JPEG_FILE)+1);
         strcpy(out, IMG_JPEG_FILE);
         return out;
     }

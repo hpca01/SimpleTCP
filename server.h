@@ -13,7 +13,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-#define PORT_NUM 8080
+#define PORT_NUM "8080"
 #define BUFF_SIZE 20000
 #define BACKLOG 100
 #define HTML_FILE "text/html"
