@@ -13,6 +13,7 @@ int main()
     return 0;
 }
 
+// deprecated
 void read_file()
 {
     //route requested resource = file name inside of files dir

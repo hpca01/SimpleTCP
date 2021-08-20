@@ -1,6 +1,5 @@
 #include "server.h"
 #include <pthread.h>
-#include "queue.h"
 
 const char *FMT = "HTTP/1.1 200 OK\r\n"
                   "Content-length: %ld\r\n"
@@ -11,6 +10,23 @@ const char *FMT = "HTTP/1.1 200 OK\r\n"
 const char *file_not_supported = "File Not Supported";
 
 const char *file_not_found = "File requested is NOT found";
+
+void read_files(){
+    char *file = "./files/index.html";
+    int fd = open(file, O_RDONLY, S_IRUSR | S_IRUSR);
+    struct stat fd_info;
+
+    if(fstat(fd, &fd_info) == -1){
+        perror("Couldn't get file size info.\n");
+    }
+    printf("File %s size is %ld\n", file, fd_info.st_size);
+
+    char* file_in_memory = mmap(NULL, fd_info.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    munmap(file_in_memory, fd_info.st_size);
+    close(fd);
+
+}
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -194,7 +210,7 @@ Route *parse_http(char *input)
 
 int main()
 {
-
+    read_files();
     //initialize all the threads
 
     struct addrinfo hints, *res;
