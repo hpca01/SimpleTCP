@@ -1,8 +1,9 @@
+#ifndef QUEUE_H
+#define QUEUE_H
+
 #include <pthread.h>
 #include "server.h"
 
-#ifndef QUEUE_H
-#define QUEUE_H
 
 typedef struct node
 {

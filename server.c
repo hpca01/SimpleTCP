@@ -11,22 +11,6 @@ const char *file_not_supported = "File Not Supported";
 
 const char *file_not_found = "File requested is NOT found";
 
-void read_files(){
-    char *file = "./files/index.html";
-    int fd = open(file, O_RDONLY, S_IRUSR | S_IRUSR);
-    struct stat fd_info;
-
-    if(fstat(fd, &fd_info) == -1){
-        perror("Couldn't get file size info.\n");
-    }
-    printf("File %s size is %ld\n", file, fd_info.st_size);
-
-    char* file_in_memory = mmap(NULL, fd_info.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-
-    munmap(file_in_memory, fd_info.st_size);
-    close(fd);
-
-}
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -308,10 +292,10 @@ int read_file(Route *route, FileOut *file_out)
     struct stat sbuf;
     char files[] = "./files";
     char *fp = realpath(files, NULL);
-    //error check route
     if(route->route == NULL){
         return -1;
     }
+
     char *c_fp = malloc(strlen(fp) + strlen(route->route) + 1); //TODO FREE
     sprintf(c_fp, "%s%s", fp, route->route);
     printf("\n\nFile path %s\n", c_fp);
@@ -349,6 +333,7 @@ int read_file(Route *route, FileOut *file_out)
     fflush(stdout);
     free(c_fp);
     fclose(f_to_read);
+    free(fp);
     return 1;
 }
 
@@ -404,7 +389,10 @@ void write_file(FileOut *out, int accepted_socket)
     fprintf(sockfd, "Content-type: %s\n", out->filetype);
     fprintf(sockfd, "\r\n");
 
-    fwrite(out->buffer, sizeof(unsigned char), out->fp.st_size, sockfd); //should check to see if all of the content is written, there is no guarantee that fwrite will write ALL of the data out.
+    size_t written = fwrite(out->buffer, sizeof(unsigned char), out->fp.st_size, sockfd); //should check to see if all of the content is written, there is no guarantee that fwrite will write ALL of the data out.
+    if (written != out->fp.st_size){
+        perror("Error writing contents into socket");
+    }
     fflush(sockfd);
     fclose(sockfd);
 }

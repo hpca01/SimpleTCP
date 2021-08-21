@@ -1,42 +1,67 @@
-#include <sys/stat.h>
-#include <stdio.h>
-#include <errno.h>
+
+//eventually move all file related code into here
+// #include "server.h"
+#include "files.h"
+#include <fts.h>
+#include <unistd.h>
+
+#include <limits.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-//eventuall move all file related code into here
+// void read_files(){
+//     char *file = "./files/index.html";
+//     int fd = open(file, O_RDONLY, S_IRUSR | S_IRUSR);
+//     struct stat fd_info;
 
-void read_file();
+//     if(fstat(fd, &fd_info) == -1){
+//         perror("Couldn't get file size info.\n");
+//     }
+//     printf("File %s size is %ld\n", file, fd_info.st_size);
 
-int main()
-{
-    read_file();
-    return 0;
-}
+//     char* file_in_memory = mmap(NULL, fd_info.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
-// deprecated
-void read_file()
-{
-    //route requested resource = file name inside of files dir
-    struct stat sbuf;
-    char files[] = "./files/pdf1.pdf";
-    printf("File path %s\n", files);
+//     munmap(file_in_memory, fd_info.st_size);
+//     close(fd);
 
-    if (stat(files, &sbuf) < 0)
-    {
-        perror("Error locating file");
-        return;
+// }
+
+// MappedFiles** read_files_into_shm(){
+//     char files[] = "./files";
+//     char *fp = realpath(files, NULL);
+//     char* const* path[] = {fp, NULL};
+    
+
+//     FTS* file_dir
+// }
+
+int main(){
+    char files[] = "./files\0";
+    char* fp = realpath(files, NULL);
+    char* const path[] = {fp, NULL};
+
+    printf("Printing where the directory is\n");
+
+    printf("Directory: %s \n", fp);
+
+    FTS* file_dir;
+
+    file_dir = fts_open(path, FTS_PHYSICAL, NULL);
+
+    FTSENT* iter_dir;
+
+    while((iter_dir = fts_read(file_dir))!= NULL){
+        printf("Children in %s depth: %d:\n", iter_dir->fts_name, iter_dir->fts_level);
+        FTSENT* node = fts_children(file_dir, 0);
+        while(node != NULL){
+            printf("\tFile name is %s accessible at %s/%s\n", node->fts_name, node->fts_path, node->fts_accpath);
+            node = node->fts_link;
+        }
+        free(node);
     }
 
-    printf("File length of : %s\n\n----------------------------\n%d bytes\n", files, (int)sbuf.st_size);
-    fflush(stdout);
+    fts_close(file_dir);
+    free(iter_dir);
+    free(fp);
 
-    unsigned char *buffer = calloc(sbuf.st_size, sizeof(unsigned char)); //TODO free
-    FILE *fp = fopen(files, "r");
-
-    if (fp < 0)
-        perror("Cannot open file");
-
-    fread(buffer, sizeof(unsigned char), sbuf.st_size, fp);
-    fflush(stdout);
-    free(buffer);
 }
