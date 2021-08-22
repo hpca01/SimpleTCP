@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-MappedFiles** read_files_into_shm(){
+MappedFiles* read_files_into_shm(){
     char favico[] = "./files/favicon.ico";
     char index[] = "./files/index.html";
     char pdf1[] = "./files/pdf1.pdf";
@@ -55,12 +55,12 @@ MappedFiles** read_files_into_shm(){
     printf("\tMapped file name: %s size: %ld address: %x\n", simple, simple_info.st_size, simple_in_mem);
 
 
-    MappedFiles** files = calloc(4, sizeof(MappedFiles));
+    MappedFiles* files = calloc(4, sizeof(MappedFiles));
 
-    files[0] = &(MappedFiles){favico_path, favico_in_mem, &favico_info, 0};
-    files[1] = &(MappedFiles){index_path, index_in_mem, &index_info, 0};
-    files[2] = &(MappedFiles){pdf1_path, pdf1_in_mem, &pdf1_info, 0};
-    files[3] = &(MappedFiles){simple_path, simple_in_mem, &simple_info, 0};
+    files[0] = (MappedFiles){favico_path, favico_in_mem, &favico_info, 0};
+    files[1] = (MappedFiles){index_path, index_in_mem, &index_info, 0};
+    files[2] = (MappedFiles){pdf1_path, pdf1_in_mem, &pdf1_info, 0};
+    files[3] = (MappedFiles){simple_path, simple_in_mem, &simple_info, 0};
 
     close(favico_fd);
     close(index_fd);
@@ -70,7 +70,7 @@ MappedFiles** read_files_into_shm(){
     return files;
 }
 
-int len(MappedFiles** files){
+int len(MappedFiles* files){
     //caller should be aware this can cause segfault if array is not populated w/ elements..
     int size = sizeof(files)/sizeof(files[0]);
     return size;
@@ -78,24 +78,24 @@ int len(MappedFiles** files){
 
 
 
-void unmap_file(MappedFiles* file){
-    printf("Umapping file %s size: %ld address: %x\n", file->file_name, file->info->st_size, file->mapped_file);
-    if (munmap(file->mapped_file, file->info->st_size) !=0){
+void unmap_file(MappedFiles file){
+    printf("Umapping file %s size: %ld address: %x\n", file.file_name, file.info->st_size, file.mapped_file);
+    if (munmap(file.mapped_file, file.info->st_size) !=0){
         perror("Error unmapping file");
     }
 }
 
 int main(){
 
-    MappedFiles** files = read_files_into_shm();
+    MappedFiles* files = read_files_into_shm();
 
     int length = 4;
 
     for(int i =0; i<length; i++){
-        MappedFiles* file = files[i];
-        printf("Mapped file name: %s\n", file->file_name);
-        printf("Mapped file size: %ld\n", file->info->st_size);
-        printf("Mapped file address: %x\n", file->mapped_file);
+        MappedFiles file = files[i];
+        printf("Mapped file name: %s\n", file.file_name);
+        printf("Mapped file size: %ld\n", file.info->st_size);
+        printf("Mapped file address: %x\n", file.mapped_file);
         unmap_file(file);
     }
 
