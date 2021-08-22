@@ -18,7 +18,7 @@ debug:server
 
 files: files.c
 	$(CC) $(CFLAGS_NO_THREADS) -o files_test files.c
-	./files_test
+	# ./files_test
 
 clean_files: files_test
 	$(RM) files_test
