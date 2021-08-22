@@ -5,7 +5,7 @@
 typedef struct {
     char *file_name;
     unsigned char *mapped_file;
-    struct stat *info;
+    unsigned long size;
     unsigned int used;
 } MappedFiles;
 
