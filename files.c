@@ -47,10 +47,10 @@ MappedFiles* read_files_into_shm(){
 
     MappedFiles* files = calloc(4, sizeof(MappedFiles));
 
-    files[0] = (MappedFiles){favico_path, favico_in_mem, favico_info.st_size, 0};
-    files[1] = (MappedFiles){index_path, index_in_mem, index_info.st_size, 0};
-    files[2] = (MappedFiles){pdf1_path, pdf1_in_mem, pdf1_info.st_size, 0};
-    files[3] = (MappedFiles){simple_path, simple_in_mem, simple_info.st_size, 0};
+    files[0] = (MappedFiles){favico_path, favico_in_mem, favico_info.st_size, 0, favico_info};
+    files[1] = (MappedFiles){index_path, index_in_mem, index_info.st_size, 0, index_info};
+    files[2] = (MappedFiles){pdf1_path, pdf1_in_mem, pdf1_info.st_size, 0, pdf1_info};
+    files[3] = (MappedFiles){simple_path, simple_in_mem, simple_info.st_size, 0, simple_info};
 
     close(favico_fd);
     close(index_fd);
@@ -69,8 +69,8 @@ int len(MappedFiles* files){
 
 
 void unmap_file(MappedFiles file){
-    printf("Umapping file %s size: %ld", file.file_name, file.size);
-    if (munmap(file.mapped_file, file.size) !=0){
+    printf("Umapping file %s size: %ld", file.file_name, file.info.st_size);
+    if (munmap(file.mapped_file, file.info.st_size) !=0){
         perror("Error unmapping file");
     }
 }
@@ -84,7 +84,7 @@ int main(){
     for(int i =0; i<length; i++){
         MappedFiles file = files[i];
         printf("Mapped file name: %s\n", file.file_name);
-        printf("Mapped file size: %ld\n", file.size);
+        printf("Mapped file size: %ld\n", file.info.st_size);
         unmap_file(file);
     }
 
